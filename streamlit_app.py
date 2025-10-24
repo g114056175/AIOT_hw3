@@ -182,45 +182,6 @@ def main():
         show_demo(vectorizer, model)
     else:
         show_model_metrics(metrics, cm)
-        # Feature extraction and prediction
-        X_test = vectorizer.transform([text_to_analyze])
-        spam_prob = model.predict_proba(X_test)[0][1]
-        
-        # Display results
-        st.header('Analysis Results')
-        result = "Spam" if spam_prob > 0.5 else "Ham"
-        st.write(f"This email is likely: **{result}**")
-        
-        # Show probability bar
-        plot_probability_bar(spam_prob)
-        
-        # Show detailed probabilities
-        st.write(f"- Ham probability: {(1-spam_prob)*100:.2f}%")
-        st.write(f"- Spam probability: {spam_prob*100:.2f}%")
-        
-        # Get words from current text
-        current_text_features = vectorizer.transform([text_to_analyze])
-        current_words = set()
-        for idx, val in enumerate(current_text_features.toarray()[0]):
-            if val > 0:
-                current_words.add(vectorizer.get_feature_names_out()[idx])
-        
-        # Calculate feature importance
-        feature_importance = pd.DataFrame({
-            'word': vectorizer.get_feature_names_out(),
-            'importance': model.feature_log_prob_[1] - model.feature_log_prob_[0]
-        })
-        
-        # Only keep words that appear in current text
-        feature_importance = feature_importance[feature_importance['word'].isin(current_words)]
-        top_features = feature_importance.nlargest(5, 'importance')
-        
-        st.subheader('Key words influencing the decision')
-        if not top_features.empty:
-            for _, row in top_features.iterrows():
-                st.write(f"- {row['word']}: {row['importance']:.4f}")
-        else:
-            st.write("No significant keywords found in the text")
 
 if __name__ == '__main__':
     main()
