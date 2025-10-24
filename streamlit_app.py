@@ -4,69 +4,102 @@ Streamlit application for spam email classification.
 import streamlit as st
 import pandas as pd
 import numpy as np
-from src.data_processing.preprocessor import EmailPreprocessor
-from src.models.classifier import SpamClassifier
-from src.visualization.visualizer import SpamVisualizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 預設的測試郵件範例
+SAMPLE_EMAILS = {
+    "正常郵件1": "Dear valued customer, Your account statement is now available. Please log in to your secure account to view it.",
+    "正常郵件2": "Team meeting scheduled for tomorrow at 10 AM. Please prepare your weekly progress report.",
+    "垃圾郵件1": "CONGRATULATIONS! You've won $1,000,000 in our lottery! Click here to claim your prize now!!!",
+    "垃圾郵件2": "Buy now! 90% OFF on luxury watches! Limited time offer! Don't miss out!!!",
+}
+
+# 載入訓練數據
+@st.cache_data
+def load_training_data():
+    # 這裡可以加入更多訓練數據
+    emails = [
+        "Your account statement is ready",
+        "Meeting tomorrow at 10 AM",
+        "Win million dollars now!!!",
+        "90% OFF luxury watches!!!"
+    ]
+    labels = [0, 0, 1, 1]  # 0: 正常郵件, 1: 垃圾郵件
+    return emails, labels
+
+def train_model(emails, labels):
+    vectorizer = TfidfVectorizer(max_features=1000)
+    X = vectorizer.fit_transform(emails)
+    model = MultinomialNB()
+    model.fit(X, labels)
+    return vectorizer, model
+
+def plot_probability_bar(probability):
+    fig, ax = plt.subplots(figsize=(10, 2))
+    colors = ['green' if probability < 0.5 else 'red']
+    sns.barplot(x=[probability], y=['Spam Probability'], ax=ax, palette=colors)
+    ax.set_xlim(0, 1)
+    plt.title('垃圾郵件機率')
+    st.pyplot(fig)
+    plt.close()
 
 def main():
-    st.title('Spam Email Classification')
+    st.title('垃圾郵件分類系統')
     
-    # Initialize components
-    preprocessor = EmailPreprocessor()
-    classifier = SpamClassifier()
-    visualizer = SpamVisualizer()
+    # 載入和訓練模型
+    emails, labels = load_training_data()
+    vectorizer, model = train_model(emails, labels)
     
-    # Sidebar
-    st.sidebar.header('Options')
-    
-    # File upload
-    uploaded_file = st.sidebar.file_uploader(
-        "Upload training data (CSV)",
-        type=['csv']
+    # 選擇測試方式
+    test_method = st.radio(
+        "選擇測試方式",
+        ["使用預設範例", "輸入自定義文本"]
     )
     
-    if uploaded_file is not None:
-        # Load and preprocess data
-        df = pd.read_csv(uploaded_file)
-        
-        # Training section
-        st.header('Model Training')
-        if st.button('Train Model'):
-            with st.spinner('Training in progress...'):
-                # Preprocess
-                X = preprocessor.fit_transform(df['text'].values)
-                y = df['label'].values
-                
-                # Train
-                classifier.fit(X, y)
-                
-                # Evaluate
-                metrics = classifier.evaluate(X, y)
-                
-                # Display results
-                st.success('Training completed!')
-                visualizer.plot_metrics(metrics)
-                visualizer.plot_confusion_matrix(y, classifier.predict(X))
-    
-    # Prediction section
-    st.header('Email Classification')
-    email_text = st.text_area('Enter email text to classify:')
-    
-    if email_text and st.button('Classify'):
-        # Preprocess and predict
-        X = preprocessor.transform([email_text])
-        prediction = classifier.predict(X)[0]
-        probabilities = classifier.predict_proba(X)[0]
-        
-        # Display result
-        result = 'SPAM' if prediction == 1 else 'HAM'
-        st.write(f'Classification: **{result}**')
-        st.write(f'Confidence: {probabilities[prediction]:.2%}')
-        
-        # Display probability distribution
-        visualizer.plot_probability_distribution(
-            classifier.predict_proba(X)
+    if test_method == "使用預設範例":
+        email_text = st.selectbox(
+            "選擇一個測試郵件",
+            list(SAMPLE_EMAILS.keys())
         )
+        if email_text:
+            text_to_analyze = SAMPLE_EMAILS[email_text]
+            st.text_area("郵件內容", text_to_analyze, height=100)
+    else:
+        text_to_analyze = st.text_area(
+            "輸入要測試的郵件內容",
+            height=100
+        )
+    
+    if st.button('開始分析') and text_to_analyze:
+        # 特徵提取和預測
+        X_test = vectorizer.transform([text_to_analyze])
+        spam_prob = model.predict_proba(X_test)[0][1]
+        
+        # 顯示結果
+        st.header('分析結果')
+        result = "垃圾郵件" if spam_prob > 0.5 else "正常郵件"
+        st.write(f"這封郵件很可能是: **{result}**")
+        
+        # 顯示機率條形圖
+        plot_probability_bar(spam_prob)
+        
+        # 顯示詳細機率
+        st.write(f"- 是正常郵件的機率: {(1-spam_prob)*100:.2f}%")
+        st.write(f"- 是垃圾郵件的機率: {spam_prob*100:.2f}%")
+        
+        # 顯示重要特徵
+        feature_importance = pd.DataFrame({
+            'word': vectorizer.get_feature_names_out(),
+            'importance': model.feature_log_prob_[1] - model.feature_log_prob_[0]
+        })
+        top_features = feature_importance.nlargest(5, 'importance')
+        
+        st.subheader('影響判斷的關鍵字')
+        for _, row in top_features.iterrows():
+            st.write(f"- {row['word']}: {row['importance']:.4f}")
 
 if __name__ == '__main__':
     main()
