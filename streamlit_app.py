@@ -15,10 +15,10 @@ import seaborn as sns
 # Sample emails for quick testing
 SAMPLE_EMAILS = {
     "None": "",
-    "Normal Email 1": "Hi team, The quarterly report is ready for review. Please check your email for the PDF attachment and let me know if you have any questions.",
-    "Normal Email 2": "Dear Mr. Smith, Following up on our meeting yesterday, I've attached the revised proposal. Please review it at your convenience.",
-    "Spam Email 1": "CONGRATULATIONS!!! YOU'VE WON $5,000,000 in our LOTTERY! CLICK HERE to CLAIM YOUR PRIZE NOW! Limited time offer!!!",
-    "Spam Email 2": "AMAZING DEAL!!! 90% OFF Designer Watches! Buy NOW! Rolex, Omega at lowest prices ever! Limited stock! Order NOW!!!"
+    "Normal Email 1": "Hi team, The project timeline has been updated. Please review the attached schedule and let me know if you have any conflicts with the proposed deadlines.",
+    "Normal Email 2": "Dear Mr. Johnson, Thank you for your interest in our services. I've attached the detailed proposal as discussed. Please feel free to contact me with any questions.",
+    "Spam Email 1": "$$$ MAKE MONEY FAST!!! Work from home and earn $10,000/week! 100% GUARANTEED! No experience needed! CLICK NOW to start earning!!!",
+    "Spam Email 2": "FREE FREE FREE!!! V1AGRA P1LLS at 95% DISCOUNT! Best PR1CE! No PRESCR1PTI0N needed! Buy N0W! Limited Time 0FFER!!!"
 }
 
 # Load training data
