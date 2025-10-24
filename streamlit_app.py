@@ -18,7 +18,7 @@ SAMPLE_EMAILS = {
     "Normal Email 1": "Hi team, The project timeline has been updated. Please review the attached schedule and let me know if you have any conflicts with the proposed deadlines.",
     "Normal Email 2": "Dear Mr. Johnson, Thank you for your interest in our services. I've attached the detailed proposal as discussed. Please feel free to contact me with any questions.",
     "Spam Email 1": "$$$ MAKE MONEY FAST!!! Work from home and earn $10,000/week! 100% GUARANTEED! No experience needed! CLICK NOW to start earning!!!",
-    "Spam Email 2": "FREE FREE FREE!!! V1AGRA P1LLS at 95% DISCOUNT! Best PR1CE! No PRESCR1PTI0N needed! Buy N0W! Limited Time 0FFER!!!"
+    "Spam Email 2": "Congratulations! You have won a prize. Claim now.\n\nDear Lucky Winner,\n\nYou have been selected to receive our exclusive prize worth $1,000! Act fast - this is a limited time offer!\n\nClick here to claim: www.totally-legitimate-prizes.com\nOr call now: 1-800-PRIZE-NOW\n\nHurry! This offer expires in 24 hours.\nNo purchase necessary. Don't miss out!"
 }
 
 # Load training data
@@ -105,7 +105,7 @@ def show_demo(vectorizer, model):
         text_to_analyze = st.text_area(
             "Email content to analyze",
             value=SAMPLE_EMAILS[email_template],
-            height=100
+            height=200
         )
     
     if st.button('Analyze') and text_to_analyze:
