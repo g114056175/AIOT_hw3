@@ -9,6 +9,10 @@ from sklearn.naive_bayes import MultinomialNB
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# 設置中文字體
+plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei']  # 微軟正黑體
+plt.rcParams['axes.unicode_minus'] = False  # 用來正常顯示負號
+
 # 預設的測試郵件範例
 SAMPLE_EMAILS = {
     "正常郵件1": "Dear valued customer, Your account statement is now available. Please log in to your secure account to view it.",
@@ -91,15 +95,29 @@ def main():
         st.write(f"- 是垃圾郵件的機率: {spam_prob*100:.2f}%")
         
         # 顯示重要特徵
+        # 獲取當前文本中的詞彙
+        current_text_features = vectorizer.transform([text_to_analyze])
+        current_words = set()
+        for idx, val in enumerate(current_text_features.toarray()[0]):
+            if val > 0:
+                current_words.add(vectorizer.get_feature_names_out()[idx])
+        
+        # 計算特徵重要性
         feature_importance = pd.DataFrame({
             'word': vectorizer.get_feature_names_out(),
             'importance': model.feature_log_prob_[1] - model.feature_log_prob_[0]
         })
+        
+        # 只保留當前文本中出現的詞
+        feature_importance = feature_importance[feature_importance['word'].isin(current_words)]
         top_features = feature_importance.nlargest(5, 'importance')
         
-        st.subheader('影響判斷的關鍵字')
-        for _, row in top_features.iterrows():
-            st.write(f"- {row['word']}: {row['importance']:.4f}")
+        st.subheader('當前郵件中影響判斷的關鍵字')
+        if not top_features.empty:
+            for _, row in top_features.iterrows():
+                st.write(f"- {row['word']}: {row['importance']:.4f}")
+        else:
+            st.write("沒有找到顯著影響判斷的關鍵字")
 
 if __name__ == '__main__':
     main()
