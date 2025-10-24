@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -40,12 +42,34 @@ def load_training_data():
         labels = [0, 0, 1, 1]
         return emails, labels
 
-def train_model(emails, labels):
+def train_and_evaluate_model(emails, labels):
+    # Split the dataset
+    X_train, X_test, y_train, y_test = train_test_split(emails, labels, test_size=0.2, random_state=42)
+    
+    # Initialize and fit the vectorizer
     vectorizer = TfidfVectorizer(max_features=1000)
-    X = vectorizer.fit_transform(emails)
+    X_train_vec = vectorizer.fit_transform(X_train)
+    X_test_vec = vectorizer.transform(X_test)
+    
+    # Train the model
     model = MultinomialNB()
-    model.fit(X, labels)
-    return vectorizer, model
+    model.fit(X_train_vec, y_train)
+    
+    # Make predictions
+    y_pred = model.predict(X_test_vec)
+    
+    # Calculate metrics
+    metrics = {
+        'accuracy': accuracy_score(y_test, y_pred),
+        'precision': precision_score(y_test, y_pred),
+        'recall': recall_score(y_test, y_pred),
+        'f1': f1_score(y_test, y_pred)
+    }
+    
+    # Calculate confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+    
+    return vectorizer, model, metrics, cm, (X_test, y_test, y_pred)
 
 def plot_probability_bar(probability):
     fig, ax = plt.subplots(figsize=(10, 2))
@@ -56,12 +80,38 @@ def plot_probability_bar(probability):
     st.pyplot(fig)
     plt.close()
 
+def plot_confusion_matrix(cm):
+    fig, ax = plt.subplots(figsize=(6, 4))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.title('Confusion Matrix')
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    st.pyplot(fig)
+    plt.close()
+
 def main():
     st.title('Email Spam Classification System')
     
     # Load and train model
     emails, labels = load_training_data()
-    vectorizer, model = train_model(emails, labels)
+    vectorizer, model, metrics, cm, eval_data = train_and_evaluate_model(emails, labels)
+    
+    # Display model performance metrics
+    st.header('Model Performance Metrics')
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric(label="Accuracy", value=f"{metrics['accuracy']:.2%}")
+    with col2:
+        st.metric(label="Precision", value=f"{metrics['precision']:.2%}")
+    with col3:
+        st.metric(label="Recall", value=f"{metrics['recall']:.2%}")
+    with col4:
+        st.metric(label="F1 Score", value=f"{metrics['f1']:.2%}")
+    
+    # Display confusion matrix
+    st.subheader('Confusion Matrix')
+    plot_confusion_matrix(cm)
     
     # Create a layout with two columns
     col1, col2 = st.columns([1, 3])
