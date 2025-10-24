@@ -3,7 +3,7 @@
 This project implements a spam email classification system using machine learning, deployed on Streamlit Cloud.
 
 ## Live Demo
-Visit the live application at: [Streamlit Cloud Demo](https://g114056175-aiot-hw3.streamlit.app)
+Visit the live application at: [Streamlit Cloud Demo](https://aiothw3-jycxbyewety9g3fogipmeq.streamlit.app/)
 
 ## Features
 - Email text classification (Spam/Ham)
@@ -24,11 +24,15 @@ Visit the live application at: [Streamlit Cloud Demo](https://g114056175-aiot-hw
 ```
 
 ## How to Use
-1. Visit the [live demo](https://g114056175-aiot-hw3.streamlit.app)
-2. Upload training data (CSV format with 'text' and 'label' columns)
-3. Train the model using the provided interface
-4. Enter email text to classify
-5. View classification results and visualizations
+1. Visit the [live demo](https://aiothw3-jycxbyewety9g3fogipmeq.streamlit.app/)
+2. Choose between the "Spam Detection Demo" and "Model Performance" pages
+3. In the demo page:
+   - Select a sample email from the dropdown or enter your own text
+   - Click "Analyze" to see the classification results
+   - View probability scores and influential keywords
+4. In the performance page:
+   - Check model accuracy metrics
+   - Examine the confusion matrix
 
 ## Technologies Used
 - Python
