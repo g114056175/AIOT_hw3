@@ -15,10 +15,10 @@ import seaborn as sns
 # Sample emails for quick testing
 SAMPLE_EMAILS = {
     "None": "",
-    "Normal Email 1": "Dear valued customer, Your account statement is now available. Please log in to your secure account to view it.",
-    "Normal Email 2": "Team meeting scheduled for tomorrow at 10 AM. Please prepare your weekly progress report.",
-    "Spam Email 1": "CONGRATULATIONS! You've won $1,000,000 in our lottery! Click here to claim your prize now!!!",
-    "Spam Email 2": "Buy now! 90% OFF on luxury watches! Limited time offer! Don't miss out!!!",
+    "Normal Email 1": "Hi team, The quarterly report is ready for review. Please check your email for the PDF attachment and let me know if you have any questions.",
+    "Normal Email 2": "Dear Mr. Smith, Following up on our meeting yesterday, I've attached the revised proposal. Please review it at your convenience.",
+    "Spam Email 1": "CONGRATULATIONS!!! YOU'VE WON $5,000,000 in our LOTTERY! CLICK HERE to CLAIM YOUR PRIZE NOW! Limited time offer!!!",
+    "Spam Email 2": "AMAZING DEAL!!! 90% OFF Designer Watches! Buy NOW! Rolex, Omega at lowest prices ever! Limited stock! Order NOW!!!"
 }
 
 # Load training data
@@ -89,30 +89,7 @@ def plot_confusion_matrix(cm):
     st.pyplot(fig)
     plt.close()
 
-def main():
-    st.title('Email Spam Classification System')
-    
-    # Load and train model
-    emails, labels = load_training_data()
-    vectorizer, model, metrics, cm, eval_data = train_and_evaluate_model(emails, labels)
-    
-    # Display model performance metrics
-    st.header('Model Performance Metrics')
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric(label="Accuracy", value=f"{metrics['accuracy']:.2%}")
-    with col2:
-        st.metric(label="Precision", value=f"{metrics['precision']:.2%}")
-    with col3:
-        st.metric(label="Recall", value=f"{metrics['recall']:.2%}")
-    with col4:
-        st.metric(label="F1 Score", value=f"{metrics['f1']:.2%}")
-    
-    # Display confusion matrix
-    st.subheader('Confusion Matrix')
-    plot_confusion_matrix(cm)
-    
+def show_demo(vectorizer, model):
     # Create a layout with two columns
     col1, col2 = st.columns([1, 3])
     
@@ -132,6 +109,79 @@ def main():
         )
     
     if st.button('Analyze') and text_to_analyze:
+        # Feature extraction and prediction
+        X_test = vectorizer.transform([text_to_analyze])
+        spam_prob = model.predict_proba(X_test)[0][1]
+        
+        # Display results
+        st.header('Analysis Results')
+        result = "Spam" if spam_prob > 0.5 else "Ham"
+        st.write(f"This email is likely: **{result}**")
+        
+        # Show probability bar
+        plot_probability_bar(spam_prob)
+        
+        # Show detailed probabilities
+        st.write(f"- Ham probability: {(1-spam_prob)*100:.2f}%")
+        st.write(f"- Spam probability: {spam_prob*100:.2f}%")
+        
+        # Get words from current text
+        current_text_features = vectorizer.transform([text_to_analyze])
+        current_words = set()
+        for idx, val in enumerate(current_text_features.toarray()[0]):
+            if val > 0:
+                current_words.add(vectorizer.get_feature_names_out()[idx])
+        
+        # Calculate feature importance
+        feature_importance = pd.DataFrame({
+            'word': vectorizer.get_feature_names_out(),
+            'importance': model.feature_log_prob_[1] - model.feature_log_prob_[0]
+        })
+        
+        # Only keep words that appear in current text
+        feature_importance = feature_importance[feature_importance['word'].isin(current_words)]
+        top_features = feature_importance.nlargest(5, 'importance')
+        
+        st.subheader('Key words influencing the decision')
+        if not top_features.empty:
+            for _, row in top_features.iterrows():
+                st.write(f"- {row['word']}: {row['importance']:.4f}")
+        else:
+            st.write("No significant keywords found in the text")
+
+def show_model_metrics(metrics, cm):
+    st.header('Model Performance Metrics')
+    
+    # Display metrics in columns
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric(label="Accuracy", value=f"{metrics['accuracy']:.2%}")
+    with col2:
+        st.metric(label="Precision", value=f"{metrics['precision']:.2%}")
+    with col3:
+        st.metric(label="Recall", value=f"{metrics['recall']:.2%}")
+    with col4:
+        st.metric(label="F1 Score", value=f"{metrics['f1']:.2%}")
+    
+    # Display confusion matrix
+    st.subheader('Confusion Matrix')
+    plot_confusion_matrix(cm)
+
+def main():
+    st.title('Email Spam Classification System')
+    
+    # Load and train model
+    emails, labels = load_training_data()
+    vectorizer, model, metrics, cm, eval_data = train_and_evaluate_model(emails, labels)
+    
+    # Create sidebar for navigation
+    page = st.sidebar.radio("Navigation", ["Spam Detection Demo", "Model Performance"])
+    
+    # Display appropriate page based on selection
+    if page == "Spam Detection Demo":
+        show_demo(vectorizer, model)
+    else:
+        show_model_metrics(metrics, cm)
         # Feature extraction and prediction
         X_test = vectorizer.transform([text_to_analyze])
         spam_prob = model.predict_proba(X_test)[0][1]
